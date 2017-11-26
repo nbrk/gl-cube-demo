@@ -1,10 +1,17 @@
 #version 430 core
 
 
-out vec4 fColor;
+//in vec2 Texcoord;
+in vec3 VColor;
+
+out vec4 outColor;
+
+//uniform sampler2D tex;
 
 void
 main()
 {
-  fColor = vec4(0.0, 0.0, 1.0, 1.0);
+  //outColor = texture(tex, Texcoord);
+  //    outColor = vec4(0.0, 0.0, 1.0, 1.0);
+  outColor = vec4(VColor, 1);
 }

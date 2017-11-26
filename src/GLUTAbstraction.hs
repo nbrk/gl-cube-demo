@@ -2,6 +2,7 @@ module GLUTAbstraction where
 
 import Graphics.UI.GLUT
 import Data.IORef
+import Codec.Image.STB
 
 import Types
 import GLPipeline
@@ -10,16 +11,19 @@ import GLPipeline
 glutPrepare :: IO ()
 glutPrepare = do
   (progName, _args) <- getArgsAndInitialize
-  initialDisplayMode $= [ RGBAMode ]
+  initialDisplayMode $= [ RGBAMode, WithDepthBuffer ]
   initialWindowSize $= Size 512 512
   initialContextVersion $= (4, 3)
   initialContextProfile $= [ CoreProfile ]
   _ <- createWindow progName
 
+  -- (Right bm) <- loadImage "crate.jpg"
+  -- putStrLn $ "Loaded image: " ++ show bm
+
   descriptor <- pipelineSetup
 
 
---  depthFunc $= Just Less
+  depthFunc $= Just Less
   displayCallback $= display descriptor
   specialCallback $= Just (specKeyDown descriptor)
 
@@ -30,28 +34,29 @@ glutLoop = mainLoop
 ----
 
 display :: Descriptor -> DisplayCallback
-display (Descriptor avref prog vao numvs) = do
+display d = do
 --  clear [ ColorBuffer, DepthBuffer ]
-  clear [ ColorBuffer ]
+  clear [ ColorBuffer, DepthBuffer ]
 
   -- get angles verctor from IORef
-  (Vector3 ax ay az) <- get avref
-
+  (Vector3 ax ay az) <- get $ descAngles d
 
   -- set angles for the shader program
-  rotAngles <- get $ uniformLocation prog "rotAngles"
+  rotAngles <- get $ uniformLocation (descProgram d) "rotAngles"
   uniform rotAngles $= Vector3 ax ay az
 
-  polygonMode $= (Line, Line)
-  drawArrays Triangles 0 numvs
+--  polygonMode $= (Line, Line)
+--  drawArrays TriangleFan 0 numvs
+  drawArrays Triangles 0 (descNVertices d)
+--  drawArrays LineLoop 0 numvs
   flush
 
 
 specKeyDown :: Descriptor -> SpecialCallback
-specKeyDown (Descriptor avref _ _ _) KeyLeft _ = avref $~ (\(Vector3 ax ay az) -> Vector3 ax (ay-0.1) az) >> p
-specKeyDown (Descriptor avref _ _ _) KeyRight _ = avref $~ (\(Vector3 ax ay az) -> Vector3 ax (ay+0.1) az) >> p
-specKeyDown (Descriptor avref _ _ _) KeyUp _ = avref $~ (\(Vector3 ax ay az) -> Vector3 (ax+0.1) ay az) >> p
-specKeyDown (Descriptor avref _ _ _) KeyDown _ = avref $~ (\(Vector3 ax ay az) -> Vector3 (ax-0.1) ay az) >> p
+specKeyDown d KeyLeft _ = (descAngles d) $~ (\(Vector3 ax ay az) -> Vector3 ax (ay-0.1) az) >> p
+specKeyDown d KeyRight _ = (descAngles d) $~ (\(Vector3 ax ay az) -> Vector3 ax (ay+0.1) az) >> p
+specKeyDown d KeyUp _ = (descAngles d) $~ (\(Vector3 ax ay az) -> Vector3 (ax+0.1) ay az) >> p
+specKeyDown d KeyDown _ = (descAngles d) $~ (\(Vector3 ax ay az) -> Vector3 (ax-0.1) ay az) >> p
 specKeyDown _ _ _ = return ()
 
 p = postRedisplay Nothing
