@@ -13,19 +13,19 @@ glutPrepare = do
   (progName, _args) <- getArgsAndInitialize
   initialDisplayMode $= [ RGBAMode, WithDepthBuffer ]
   initialWindowSize $= Size 512 512
-  initialContextVersion $= (4, 3)
+  initialContextVersion $= (4, 2)
   initialContextProfile $= [ CoreProfile ]
   _ <- createWindow progName
 
-  -- (Right bm) <- loadImage "crate.jpg"
-  -- putStrLn $ "Loaded image: " ++ show bm
-
-  descriptor <- pipelineSetup
-
-
-  depthFunc $= Just Less
-  displayCallback $= display descriptor
-  specialCallback $= Just (specKeyDown descriptor)
+  e <- loadImage "./crate.jpg"
+  case e of
+    Left s -> error s
+    Right bm -> do
+      putStrLn $ "Loaded image: " ++ show bm
+      descriptor <- pipelineSetup bm
+      depthFunc $= Just Less
+      displayCallback $= display descriptor
+      specialCallback $= Just (specKeyDown descriptor)
 
 
 glutLoop :: IO ()

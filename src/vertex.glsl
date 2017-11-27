@@ -1,11 +1,10 @@
-#version 430 core
+#version 420 core
 
-//in vec2 texcoord;
 in vec3 vPosition;
 in vec3 vColor;
 
-//out vec2 Texcoord;
 out vec3 VColor;
+out vec2 texcoords;
 
 uniform vec3 rotAngles;
 
@@ -34,13 +33,11 @@ main()
     rotationMatrix(vec3(0,1,0), rotAngles.y) *
     rotationMatrix(vec3(0,0,1), rotAngles.z);
 
-  //  Texcoord = texcoord;
-  //  Texcoord = vPosition.xy;
 
   vec4 pos = trans * vec4(vPosition.xyz, 1);
-  //  vec4 pos = vec4(vPosition.xy, 0, 1);
-  VColor = vColor;
   gl_Position = pos;
+  texcoords = normalize(pos.xy);
+  VColor = vColor;
 }
 
 

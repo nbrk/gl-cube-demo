@@ -4,7 +4,7 @@ import Foreign.Marshal.Array(withArray)
 import Graphics.UI.GLUT
 import Data.IORef
 import Control.Monad
---import Data.Bitmap
+import Data.Bitmap
 
 
 import Types
@@ -13,8 +13,8 @@ import LoadShaders
 import Vertices
 
 
-pipelineSetup :: IO Descriptor
-pipelineSetup = do
+pipelineSetup :: Bitmap Word8 -> IO Descriptor
+pipelineSetup bm = do
   let cube = cubeHeight 1
   colors <- forM cube $ \_ -> randomColor
 
@@ -32,7 +32,8 @@ pipelineSetup = do
 
   setupColorData program colors
 
-  position (Light 1) $= Vertex4 1.0 1.0 1.0 1.0
+  setupTexture program bm
+--  position (Light 1) $= Vertex4 1.0 1.0 1.0 1.0
 
   -- -- textures
   -- textureBuffer <- genObjectName
@@ -105,3 +106,24 @@ setupColorData program cvs = do
     (ToFloat,
      VertexArrayDescriptor 3 Float 0 (bufferOffset 0))
   vertexAttribArray atloc $= Enabled
+
+
+setupTexture :: Program -> Bitmap Word8 -> IO ()
+setupTexture program bm = do
+  -- bind PBO (so the bufferData PixelUnpackBuffer and) has the target
+  pbo <- genObjectName
+  bindBuffer PixelUnpackBuffer $= Just pbo
+
+  -- transfer the data into pixel unpack buffer
+  withBitmap bm $ \(w,h) nchn padding ptr -> do
+    bufferData PixelUnpackBuffer $= (fromIntegral (bitmapSizeInBytes bm), ptr, StaticDraw)
+
+    -- specify the texture for the current texture unit (specified with activeTexture)
+    texImage2D Texture2D NoProxy 0 RGB8
+      (TextureSize2D (fromIntegral w) (fromIntegral h)) 0
+      -- we would use last parameter as direct bitmap data (i.e. 'ptr' from above)
+      --  but we've loaded something in PBO (PixelUnpackBuffer), so the parameter
+      --  becomes an offset into the loaded pixel unpack buffer
+      (PixelData RGB UnsignedByte (bufferOffset 0))
+
+  textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
