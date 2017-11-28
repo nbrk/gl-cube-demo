@@ -13,7 +13,7 @@ glutPrepare = do
   (progName, _args) <- getArgsAndInitialize
   initialDisplayMode $= [ RGBAMode, WithDepthBuffer ]
   initialWindowSize $= Size 512 512
-  initialContextVersion $= (4, 3)
+  initialContextVersion $= (4, 2)
   initialContextProfile $= [ CoreProfile ]
   _ <- createWindow progName
 
